@@ -63,14 +63,14 @@ def list_data(directory, is_training=True):
     return file_names, labels, indicator_vectors.astype(np.float32)
 
 
-def check_accuracy(sess, correct_prediction, is_training, dataset_init_op, word_phrases_vector):
+def check_accuracy(sess, correct_prediction, is_training, dataset_init_op, word_phrase_vector_tensor):
     """
     Check the accuracy of the model on either train or validation (depending on dataset_init_op).
     :param sess:
     :param correct_prediction: tensorflow tensor
     :param is_training: tensorflow placeholder
     :param dataset_init_op: dataset on which accuracy should be calculated
-    :param word_phrases_vector: tensorflow placeholder for concept word vectors
+    :param word_phrase_vector_tensor: tensorflow placeholder for concept word vectors
     :return: classification accuracy
     """
     concept_text_features = np.load(params.CONCEPT_WORD_VECTORS).astype(np.float32)
@@ -81,7 +81,7 @@ def check_accuracy(sess, correct_prediction, is_training, dataset_init_op, word_
         try:
             correct_pred = sess.run(correct_prediction,
                                     {is_training: False,
-                                     word_phrases_vector: concept_text_features})
+                                     word_phrase_vector_tensor: concept_text_features})
             num_correct += correct_pred.sum()
             num_samples += correct_pred.shape[0]
         except tf.errors.OutOfRangeError:
@@ -98,7 +98,7 @@ def main():
     ################
     train_file_names, train_labels, train_indicator_vectors = list_data(params.TRAIN_IMAGES_DIR, True)
     val_file_names, val_labels, val_indicator_vectors = list_data(params.TRAIN_IMAGES_DIR, False)
-    class_discriminative_features_array = np.load(params.CLASS_DISCRIMINATIVE_FEATURE)
+    class_indicator_vectors = np.load(params.CLASS_INDICATOR_VECTORS)
 
     print('Successfully loaded datasets!')
 
@@ -215,10 +215,10 @@ def main():
         # --------- Indicates whether we are in training or in evaluation mode ---------
         is_training = tf.placeholder(tf.bool)
 
-        class_discriminative_features = tf.convert_to_tensor(class_discriminative_features_array, dtype=tf.float32, name="class_discriminative_features")
+        class_indicator_vectors_tensor = tf.convert_to_tensor(class_indicator_vectors, dtype=tf.float32, name="class_indicator_vectors_tensor")
 
         # -------- Placeholders --------
-        word_phrases_vector = tf.placeholder(tf.float32, shape=[params.NO_CONCEPTS, params.TEXT_SPACE_DIM], name="word_phrases_vector")
+        word_phrase_vector_tensor = tf.placeholder(tf.float32, shape=[params.NO_CONCEPTS, params.TEXT_SPACE_DIM], name="word_phrase_vector_tensor")
 
         images, labels, indicator_vectors = iterator.get_next()
 
@@ -252,7 +252,7 @@ def main():
                     net = tf.reduce_mean(net, [1, 2], name='global_pool')
 
         with tf.variable_scope('ccnn_fc'):
-            init = np.multiply(0.1 * np.ones((params.NO_CONCEPTS, params.NO_CLASSES)), class_discriminative_features_array)
+            init = np.multiply(0.1 * np.ones((params.NO_CONCEPTS, params.NO_CLASSES)), class_indicator_vectors)
             fc_w = tf.Variable(initial_value=init, name='w', dtype=tf.float32)
 
         logits = tf.matmul(net, fc_w, name="logits")
@@ -270,7 +270,7 @@ def main():
             [-1, 196], name="visual_feats")
         embedded_visual_feats = tf.matmul(visual_feats, v_e_converter, name="embedded_visual_features")
 
-        embedded_text_feats = tf.matmul(word_phrases_vector, w_e_converter, name="embedded_text_features")
+        embedded_text_feats = tf.matmul(word_phrase_vector_tensor, w_e_converter, name="embedded_text_features")
 
         normalized_emd_visual_feats = tf.nn.l2_normalize(embedded_visual_feats, dim=1)
         normalized_text_feats = tf.nn.l2_normalize(embedded_text_feats, dim=1)
@@ -391,7 +391,7 @@ def main():
 
         learning_rate3 = tf.train.exponential_decay(params.LEARNING_RATE_3, global_step, 100000, 0.96, staircase=True)
 
-        fc_total_loss = tf.reduce_mean(classification_loss) + tf.reduce_mean(tf.abs(tf.multiply((1 - class_discriminative_features), fc_w)))
+        fc_total_loss = tf.reduce_mean(classification_loss) + tf.reduce_mean(tf.abs(tf.multiply((1 - class_indicator_vectors_tensor), fc_w)))
 
         fc_var_optimizer = tf.train.AdamOptimizer(learning_rate3)
         fc_var_train_op = fc_var_optimizer.minimize(fc_total_loss, global_step=global_step, var_list=model_variables)
@@ -420,7 +420,7 @@ def main():
     # Training CCNN #
     #################
 
-    concept_text_features = np.load(params.CONCEPT_WORD_VECTORS)
+    concept_word_phrase_vector = np.load(params.CONCEPT_WORD_PHRASE_VECTORS)
     if not os.path.exists(params.MODEL_SAVE_FOLDER):
         makedirs(os.path.join(params.MODEL_SAVE_FOLDER))
 
@@ -454,7 +454,7 @@ def main():
                         [new_var_train_op, uniqueness_loss, semantic_loss, count_loss, classification_loss,
                          total_loss],
                         {is_training: True,
-                         word_phrases_vector: concept_text_features})
+                         word_phrase_vector_tensor: concept_word_phrase_vector})
 
                     loss_for_epoch = loss_for_epoch + t_loss
                     c_loss_for_epoch = c_loss_for_epoch + np.mean(c_loss)
@@ -467,8 +467,8 @@ def main():
                     break
 
             # -------- Check accuracy on the train and val sets every epoch.
-            train_acc = check_accuracy(sess, correct_prediction, is_training, train_init_op, word_phrases_vector)
-            val_acc = check_accuracy(sess, correct_prediction, is_training, val_init_op, word_phrases_vector)
+            train_acc = check_accuracy(sess, correct_prediction, is_training, train_init_op, word_phrase_vector_tensor)
+            val_acc = check_accuracy(sess, correct_prediction, is_training, val_init_op, word_phrase_vector_tensor)
             mean_total_loss = loss_for_epoch / iteration
             mean_cls_loss = c_loss_for_epoch / iteration
             mean_uni_loss = u_loss_for_epoch / iteration
@@ -503,7 +503,7 @@ def main():
                          classification_loss,
                          total_loss],
                         {is_training: True,
-                         word_phrases_vector: concept_text_features})
+                         word_phrase_vector_tensor: concept_word_phrase_vector})
 
                     loss_for_epoch = loss_for_epoch + t_loss
                     c_loss_for_epoch = c_loss_for_epoch + np.mean(c_loss)
@@ -516,8 +516,8 @@ def main():
                     break
 
             # -------- Check accuracy on the train and val sets every epoch
-            train_acc = check_accuracy(sess, correct_prediction, is_training, train_init_op, word_phrases_vector)
-            val_acc = check_accuracy(sess, correct_prediction, is_training, val_init_op,  word_phrases_vector)
+            train_acc = check_accuracy(sess, correct_prediction, is_training, train_init_op, word_phrase_vector_tensor)
+            val_acc = check_accuracy(sess, correct_prediction, is_training, val_init_op,  word_phrase_vector_tensor)
 
             mean_total_loss = loss_for_epoch / iteration
             mean_cls_loss = c_loss_for_epoch / iteration
@@ -549,7 +549,7 @@ def main():
                         [fc_var_train_op, classification_loss,
                          total_loss],
                         {is_training: True,
-                         word_phrases_vector: concept_text_features})
+                         word_phrase_vector_tensor: concept_word_phrase_vector})
 
                     loss_for_epoch = loss_for_epoch + t_loss
                     c_loss_for_epoch = c_loss_for_epoch + np.mean(c_loss)
@@ -559,8 +559,8 @@ def main():
                     break
 
             # -------- Check accuracy on the train and val sets every epoch
-            train_acc = check_accuracy(sess, correct_prediction, is_training, train_init_op, word_phrases_vector)
-            val_acc = check_accuracy(sess, correct_prediction, is_training, val_init_op, word_phrases_vector)
+            train_acc = check_accuracy(sess, correct_prediction, is_training, train_init_op, word_phrase_vector_tensor)
+            val_acc = check_accuracy(sess, correct_prediction, is_training, val_init_op, word_phrase_vector_tensor)
 
             mean_total_loss = loss_for_epoch / iteration
             mean_cls_loss = c_loss_for_epoch / iteration

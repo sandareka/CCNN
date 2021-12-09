@@ -2,9 +2,9 @@
 TRAIN_IMAGES_DIR = 'data/train'
 TEST_IMAGES_DIR = 'data/test'
 INDICATOR_VECTORS = 'data/image_indicator_vectors.npy'
-CLASS_DISCRIMINATIVE_FEATURE = 'data/class_discriminative_features.npy'
+CLASS_INDICATOR_VECTORS = 'data/class_indicator_vectors.npy'
 PRE_TRAINED_MODEL_WEIGHTS = 'pre_trained_models/vgg_16.ckpt'
-CONCEPT_WORD_VECTORS = 'data/concept_word_vectors.npy'
+CONCEPT_WORD_PHRASE_VECTORS = 'data/concept_word_phrase_vectors.npy'
 
 NO_CLASSES = 200
 CLASS_NAME_FILE = "data/classes.txt"
