@@ -14,10 +14,12 @@ Presentation Video : <https://www.youtube.com/watch?v=vK4vti_pUMg>
 
 ## Citation
 ```
-@article{wickramanayake2101learning,
-  title={Comprehensible Convolutional Neural Networks via Guided Concept Learning},
+@inproceedings{wickramanayake2021comprehensible,
+  title={Comprehensible convolutional neural networks via guided concept learning},
   author={Wickramanayake, Sandareka and Hsu, Wynne and Lee, Mong Li},
-  journal={arXiv preprint arXiv:2101.03919},
-  year={2021}
+  booktitle={2021 International Joint Conference on Neural Networks (IJCNN)},
+  pages={1--8},
+  year={2021},
+  organization={IEEE}
 }
 ```
