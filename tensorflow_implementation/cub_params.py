@@ -5,6 +5,10 @@ INDICATOR_VECTORS = 'data/image_indicator_vectors.npy'
 CLASS_INDICATOR_VECTORS = 'data/class_indicator_vectors.npy'
 PRE_TRAINED_MODEL_WEIGHTS = 'pre_trained_models/vgg_16.ckpt'
 CONCEPT_WORD_PHRASE_VECTORS = 'data/concept_word_phrase_vectors.npy'
+CONCEPT_TEXT_FILE = "data/concepts.txt"
+CLASS_CONCEPTS = "data/class_concepts.npy"
+NOUNS_ADJECTIVES_FILE = "data/image_wise_noun_adjectives.npy"
+GLOVE_FILE_NAME = "data/glove.6B.50d.txt"
 
 NO_CLASSES = 200
 CLASS_NAME_FILE = "data/classes.txt"
@@ -16,6 +20,7 @@ ALPHA = 1
 EMBED_SPACE_DIM = 24
 TEXT_SPACE_DIM = 50
 NO_CONCEPTS = 398
+TOP_R =20
 
 # -------- Training parameters --------
 MODEL_SAVE_FOLDER = "ccnn_trained_model/"
