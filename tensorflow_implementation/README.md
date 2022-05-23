@@ -23,3 +23,5 @@ To evaluate CCNN, run:
 ```eval
 python ccnn_evaluate.py
 ```
+## Trained CCNN Model
+VGG based CCNN pretrained on CUB Dataset can be found [here](https://drive.google.com/file/d/1ZWVjAqLGcAuIB9Q1622KvRyum-60xE5S/view?usp=sharing)
