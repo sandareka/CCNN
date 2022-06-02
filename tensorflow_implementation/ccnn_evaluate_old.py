@@ -8,6 +8,10 @@ import params
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
+####
+# This is same as the cnn_evaluate.py except using different variable names. Please use this to use the given pre-trained CCNN for CUB dataset.
+####
+
 def list_data(directory):
     """
     List image names and class labels
@@ -125,13 +129,12 @@ def main():
                     net = slim.repeat(net, 3, slim.conv2d, 512, [3, 3], scope='conv5')
                     net = slim.max_pool2d(net, [2, 2], scope='pool5')
 
-                    net = slim.conv2d(net, params.NO_CONCEPTS, [1, 1], scope='ccnn_concepts')
-                    net = slim.dropout(net, params.DROP_OUT_KEEP_PROB, is_training=is_training, scope='ccnn_dropout')
+                    net = slim.conv2d(net, params.NO_CONCEPTS, [1, 1], scope='fc6')
+                    net = slim.dropout(net, params.DROP_OUT_KEEP_PROB, is_training=is_training, scope='dropout6')
 
                     net = tf.reduce_mean(net, [1, 2], name='global_pool')
 
-        with tf.variable_scope('ccnn_fc'):
-            fc_w = tf.Variable(initializer([params.NO_CONCEPTS, params.NO_CLASSES]), name='w')
+                    fc_w = tf.Variable(initializer([params.NO_CONCEPTS, params.NO_CLASSES]), name='fc7_w')
 
         logits = tf.matmul(net, tf.multiply(fc_w, class_indicator_vectors), name="logits")
 
